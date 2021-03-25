@@ -1,5 +1,6 @@
 import { Component, EventEmitter, Output } from '@angular/core'
-import { Livro } from '../livro.model'
+import { NgForm } from '@angular/forms'
+import { LivroService } from '../livro.service'
 
 @Component({
   selector: 'app-livro-inserir',
@@ -9,20 +10,21 @@ import { Livro } from '../livro.model'
 
 export class LivroInserirComponent {
 
-  @Output() livroAdicionado = new EventEmitter<Livro>()
+  constructor (private livroService: LivroService){}
 
-  id!: String
-  titulo!: String
-  autor!: String
-  nroPaginas!: String
+    onInserirLivro(form: NgForm) {
 
-  onInserirLivro() {
-    const livro: Livro = {
-      id: this.id,
-      titulo: this.titulo,
-      autor: this.autor,
-      nroPaginas: this.nroPaginas
+      if (form.invalid) {
+        return
+      }
+
+      this.livroService.adicionarLivro(
+        form.value.id,
+        form.value.titulo,
+        form.value.autor,
+        form.value.nroPaginas
+      )
+
+      form.resetForm()
     }
-    this.livroAdicionado.emit(livro)
-  }
 }
