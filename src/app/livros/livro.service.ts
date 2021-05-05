@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core'
 import { Livro } from './livro.model'
+import { map } from 'rxjs/operators'
 import { Subject } from 'rxjs'
 import { HttpClient } from '@angular/common/http'
 
@@ -13,30 +14,52 @@ export class LivroService {
   }
 
   getLivros(): void {
-      this.httpCLient.get <{mensagem: String, livros: Livro[]}> ('http://localhost:3000/api/livros').subscribe(
-        (dados) => {
-          this.livros = dados.livros
+      this.httpCLient.get <{mensagem: String, livros: any}> ('http://localhost:3000/api/livros')
+      .pipe(map((dados) => {
+        return dados.livros.map((livro: any) => {
+          return {
+            objectId: livro._id,
+            id: livro.id,
+            titulo: livro.titulo,
+            autor: livro.autor,
+            nroPaginas: livro.nroPaginas
+
+          }
+        })
+      }))
+      .subscribe(
+        (livros) => {
+          this.livros = livros
           this.listaLivrosAtualizada.next([...this.livros])
         }
       )
     }
 
   adicionarLivro(id: String, titulo: String, autor: string, nroPaginas: String) {
-
     const livro: Livro = {
+      objectId: null,
       id: id,
       titulo: titulo,
       autor: autor,
       nroPaginas: nroPaginas
     }
-    this.httpCLient.post <{mensagem: string}> ('http://localhost:3000/api/livros', livro)
+    this.httpCLient.post <{mensagem: string, objectId: string}> ('http://localhost:3000/api/livros', livro)
         .subscribe(
           (dados) => {
-            console.log(dados.mensagem)
+            livro.objectId = dados.objectId
             this.livros.push(livro)
             this.listaLivrosAtualizada.next([...this.livros])
           }
         )
+  }
+
+  removerLivro(objectId: string): void {
+    this.httpCLient.delete(`http://localhost:3000/api/livros/${objectId}`).subscribe(() => {
+      this.livros = this.livros.filter((livro) => {
+        return livro.objectId !== objectId
+      })
+      this.listaLivrosAtualizada.next([...this.livros])
+    })
   }
 
   getListaDeLivrosAtualizadaObservable() {
