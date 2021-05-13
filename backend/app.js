@@ -27,6 +27,16 @@ app.post('/api/livros', (req, res, next) => {
   })
 })
 
+app.get('/api/livros/:id', (req, res, next) => {
+  Livro.findById(req.params.id).then(livro => {
+    if(livro){
+      res.status(200).json(livro)
+    }
+    else {
+      res.status(404).json({mensagem: "Livro não encontrado!"})
+    }
+  })
+})
 
 app.get('/api/livros', (req, res, next) => {
   Livro.find().then(documents => {
@@ -41,6 +51,22 @@ app.get('/api/livros', (req, res, next) => {
 app.delete('/api/livros/:objectId', (req, res, next) => {
   Livro.deleteOne({_id: req.params.objectId}).then((resultado) => {
     res.status(200).json({mensagem: "Livro removido"})
+  })
+})
+
+
+app.put('/api/livros/:objectId', (req, res, next) => {
+  const livro = new Livro({
+    _id: req.params.objectId,
+    id: req.params.id,
+    titulo: req.body.titulo,
+    autor: req.body.autor,
+    nroPaginas: req.body.nroPaginas
+  })
+  Livro.updateOne({_id: req.params.objectId}, livro)
+  .then((resultado) => {
+    console.log(resultado)
+    res.status(200).json({mensagem: "Atualização realizada com sucesso"})
   })
 })
 
