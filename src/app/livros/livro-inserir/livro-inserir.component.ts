@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core'
-import { NgForm } from '@angular/forms'
+import { FormControl, FormGroup, NgForm, Validators } from '@angular/forms'
 import { ActivatedRoute, ParamMap } from '@angular/router'
 import { Livro } from '../livro.model'
 import { LivroService } from '../livro.service'
@@ -15,13 +15,32 @@ export class LivroInserirComponent implements OnInit {
   private modo: string = "criar"
   private idLivro: string
   public livro: Livro
+  public estaCarregando: boolean = false
+  form: FormGroup
 
   ngOnInit() {
+    this.form = new FormGroup({
+      id: new FormControl(null, {
+        validators: [Validators.required, Validators.minLength(3)]
+      }),
+      titulo: new FormControl(null, {
+        validators: [Validators.required]
+      }),
+      autor: new FormControl(null, {
+        validators: [Validators.required]
+      }),
+      nroPaginas: new FormControl(null, {
+        validators: [Validators.required]
+      })
+
+    })
     this.route.paramMap.subscribe((paramMap: ParamMap) => {
       if (paramMap.has("idLivro")) {
         this.modo = "editar"
         this.idLivro = paramMap.get("idLivro")
+        this.estaCarregando = true
         this.livroService.getLivro(this.idLivro).subscribe(dadosLivro => {
+          this.estaCarregando = false
           this.livro = {
             objectId: dadosLivro._id,
             id: dadosLivro.id,
@@ -29,6 +48,12 @@ export class LivroInserirComponent implements OnInit {
             autor: dadosLivro.autor,
             nroPaginas: dadosLivro.nroPaginas
           }
+          this.form.setValue({
+            id: this.livro.id,
+            titulo: this.livro.titulo,
+            autor: this.livro.autor,
+            nroPaginas: this.livro.nroPaginas
+          })
         })
       }
       else {
@@ -40,27 +65,28 @@ export class LivroInserirComponent implements OnInit {
 
   constructor (private livroService: LivroService, public route: ActivatedRoute){}
 
-    onSalvarLivro(form: NgForm) {
+    onSalvarLivro() {
 
-      if (form.invalid) return
+      if (this.form.invalid) return
+      this.estaCarregando = true
       if (this.modo === "criar") {
         this.livroService.adicionarLivro(
-          form.value.id,
-          form.value.titulo,
-          form.value.autor,
-          form.value.nroPaginas
+          this.form.value.id,
+          this.form.value.titulo,
+          this.form.value.autor,
+          this.form.value.nroPaginas
         )
       }
       else {
         this.livroService.AtualizarLivro(
           this.idLivro,
-          form.value.id,
-          form.value.titulo,
-          form.value.autor,
-          form.value.nroPaginas
+          this.form.value.id,
+          this.form.value.titulo,
+          this.form.value.autor,
+          this.form.value.nroPaginas
         )
       }
 
-      form.resetForm()
+      this.form.reset()
     }
 }
